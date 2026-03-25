@@ -1,0 +1,85 @@
+info:
+  name: tunning-profile
+  type: http
+  seq: 5
+
+http:
+  method: put
+  url: "{{api_url}}/cars/301/tuning-profile"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |
+      {
+        "suspension": {
+          "ranges": {
+            "spring_rate_front":      [4.0, 14.0],
+            "spring_rate_rear":       [4.0, 14.0],
+            "ride_height_front":      [55, 80],
+            "ride_height_rear":       [60, 90],
+            "damper_bump_front":      [20, 40],
+            "damper_bump_rear":       [20, 40],
+            "damper_rebound_front":   [30, 50],
+            "damper_rebound_rear":    [30, 50],
+            "arb_front":              [1, 10],
+            "arb_rear":               [1, 10],
+            "camber_front":           [0.0, 6.0],
+            "camber_rear":            [0.0, 6.0],
+            "toe_front":              [-1.0, 1.0],
+            "toe_rear":               [-1.0, 1.0]
+          },
+          "current": {
+            "ride_height_front":      60,
+            "ride_height_rear":       70,
+            "arb_front":              5,
+            "arb_rear":               5,
+            "damper_bump_front":      25,
+            "damper_bump_rear":       25,
+            "damper_rebound_front":   45,
+            "damper_rebound_rear":    45,
+            "camber_front":           3.5,
+            "camber_rear":            3.5,
+            "toe_front":              0.10,
+            "toe_rear":               0.25
+          }
+        },
+        "aerodynamics": {
+          "ranges": {
+            "downforce_front":        [350, 450],
+            "downforce_rear":         [500, 700]
+          },
+          "current": {
+            "downforce_front":        400,
+            "downforce_rear":         600
+          }
+        },
+        "differential": {
+          "ranges": {
+            "initial_torque":         [5, 60],
+            "accel_sensitivity":      [5, 60],
+            "decel_sensitivity":      [0, 60]
+          },
+          "current": {
+            "initial_torque":         10,
+            "accel_sensitivity":      30,
+            "decel_sensitivity":      30
+          }
+        },
+        "brake_balance": {
+          "ranges": {
+            "front_bias":             [-5, 5]
+          },
+          "current": {
+            "front_bias":             0
+          }
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

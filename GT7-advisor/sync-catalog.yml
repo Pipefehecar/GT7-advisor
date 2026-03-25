@@ -1,0 +1,15 @@
+info:
+  name: sync-catalog
+  type: http
+  seq: 2
+
+http:
+  method: post
+  url: "{{api_url}}/cars/sync-catalog"
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

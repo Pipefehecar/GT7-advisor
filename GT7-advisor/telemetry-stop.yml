@@ -1,0 +1,15 @@
+info:
+  name: telemetry-stop
+  type: http
+  seq: 16
+
+http:
+  method: post
+  url: "{{api_url}}/telemetry/stop"
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

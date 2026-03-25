@@ -1,0 +1,23 @@
+info:
+  name: cars
+  type: http
+  seq: 3
+
+http:
+  method: get
+  url: "{{api_url}}/cars?name=m6"
+  params:
+    - name: manufacturer
+      value: Mazda
+      type: query
+      disabled: true
+    - name: name
+      value: m6
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

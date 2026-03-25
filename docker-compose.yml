@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: gt7_advisor_api
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    volumes:
+      # Persist SQLite file on the host
+      - ./data:/app/data
+    env_file:
+      - .env
+    environment:
+      # Override DB path so SQLite lives in the mounted volume
+      DATABASE_URL: sqlite+aiosqlite:////app/data/gt7_advisor.db
+    restart: unless-stopped
+    networks:
+      - gt7net
+
+  # ── Optional Postgres profile ─────────────────────────────────────────────
+  # Start with:  docker compose --profile postgres up
+  db:
+    image: postgres:16-alpine
+    profiles: ["postgres"]
+    container_name: gt7_advisor_db
+    environment:
+      POSTGRES_USER: gt7
+      POSTGRES_PASSWORD: gt7pass
+      POSTGRES_DB: gt7_advisor
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - gt7net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gt7 -d gt7_advisor"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+networks:
+  gt7net:
+
+volumes:
+  pg_data:

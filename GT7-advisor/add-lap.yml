@@ -1,0 +1,38 @@
+info:
+  name: add-lap
+  type: http
+  seq: 10
+
+http:
+  method: post
+  url: "{{api_url}}/sessions/1/laps"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "lap_number": 1,
+        "lap_time_ms": 95432,
+        "avg_speed_kmh": 142.5,
+        "max_speed_kmh": 267.0,
+        "avg_throttle": 0.61,
+        "avg_brake": 0.18,
+        "oversteer_events": 12,
+        "understeer_events": 4,
+        "wheel_lock_events": 7,
+        "wheelspin_events": 3,
+        "bottom_out_events": 0,
+        "tyre_temp_fl": 88.5,
+        "tyre_temp_fr": 91.2,
+        "tyre_temp_rl": 84.0,
+        "tyre_temp_rr": 86.7
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

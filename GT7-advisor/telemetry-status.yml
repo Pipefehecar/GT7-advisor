@@ -1,0 +1,15 @@
+info:
+  name: telemetry-status
+  type: http
+  seq: 14
+
+http:
+  method: get
+  url: "{{api_url}}/telemetry/status"
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

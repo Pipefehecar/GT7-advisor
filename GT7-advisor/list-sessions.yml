@@ -1,0 +1,15 @@
+info:
+  name: list-sessions
+  type: http
+  seq: 8
+
+http:
+  method: get
+  url: "{{api_url}}/sessions/"
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,15 @@
+info:
+  name: telemetry-start
+  type: http
+  seq: 15
+
+http:
+  method: post
+  url: "{{api_url}}/telemetry/start"
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

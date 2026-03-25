@@ -1,0 +1,15 @@
+info:
+  name: list-suggestions
+  type: http
+  seq: 13
+
+http:
+  method: get
+  url: "{{api_url}}/sessions/1/suggestions"
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

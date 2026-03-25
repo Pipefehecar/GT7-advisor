@@ -1,0 +1,15 @@
+info:
+  name: list-laps
+  type: http
+  seq: 11
+
+http:
+  method: get
+  url: "{{api_url}}/sessions/1/laps"
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

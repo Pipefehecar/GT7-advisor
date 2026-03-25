@@ -1,0 +1,15 @@
+info:
+  name: car-by-id
+  type: http
+  seq: 4
+
+http:
+  method: get
+  url: "{{api_url}}/cars/1"
+  auth: inherit
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
