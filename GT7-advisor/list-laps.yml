@@ -5,7 +5,7 @@ info:
 
 http:
   method: get
-  url: "{{api_url}}/sessions/1/laps"
+  url: "{{api_url}}/sessions/2/laps"
   auth: inherit
 
 settings:

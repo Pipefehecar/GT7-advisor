@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Car
 from app.db.session import get_db
-from app.schemas.schemas import CarOut, TuningProfileIn
+from app.schemas.schemas import CarOut, TuningProfileIn, TuningScreenshotResponse
 from app.services.catalog import sync_catalog
+from app.services.ocr import get_ocr_provider
 
 router = APIRouter(prefix="/cars", tags=["cars"])
 
@@ -74,3 +75,42 @@ async def trigger_catalog_sync(db: AsyncSession = Depends(get_db)):
     """Pull the latest GT7 car list from ddm999 and upsert locally."""
     summary = await sync_catalog(db)
     return {"message": "Sync complete", **summary}
+
+
+@router.post("/parse-tuning-screenshot", response_model=TuningScreenshotResponse)
+async def parse_tuning_screenshot(
+    screenshot: UploadFile = File(...),
+    ocr=Depends(get_ocr_provider),
+):
+    """
+    Extract tuning parameters from a GT7 configuration sheet screenshot.
+
+    Accepts an image file (JPEG, PNG, WEBP) and uses the configured OCR provider
+    to extract all visible tuning parameters. Returns the extracted profile for
+    preview before saving.
+    """
+    if not screenshot.content_type or not screenshot.content_type.startswith("image/"):
+        raise HTTPException(400, "File must be an image (JPEG, PNG, or WEBP)")
+
+    contents = await screenshot.read()
+    if len(contents) > 10 * 1024 * 1024:
+        raise HTTPException(413, "Image too large (max 10MB)")
+
+    try:
+        result = await ocr.extract(
+            image_bytes=contents,
+            media_type=screenshot.content_type,
+        )
+    except NotImplementedError as e:
+        raise HTTPException(400, str(e))
+    except ValueError as e:
+        raise HTTPException(400, f"Failed to parse image: {str(e)}")
+
+    return TuningScreenshotResponse(
+        extracted_profile=result.extracted_profile,
+        provider=result.provider,
+        model=result.model,
+        sections_found=result.sections_found,
+        warnings=result.warnings,
+        car_name=result.car_name,
+    )

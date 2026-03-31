@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "llama3"
 
+    # OCR
+    ocr_provider: str = "anthropic"
+
     # Community catalog
     gt7_cars_csv_url: str = "https://ddm999.github.io/gt7info/data/db/cars.csv"
 

@@ -14,7 +14,7 @@ http:
     data: |-
       {
         "car_id": 301,
-        "track_name": "Laguna Seca",
+        "track_name": "Suzuka, full circuit",
         "manual_config": {
           "ride_height_front": 60,
           "ride_height_rear": 70,
@@ -36,3 +36,66 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+
+examples:
+  - name: Suzuka
+    request:
+      url: "{{api_url}}/sessions/"
+      method: post
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "car_id": 301,
+            "track_name": "Suzuka, full circuit",
+            "manual_config": {
+              "ride_height_front": 60,
+              "ride_height_rear": 70,
+              "arb_front": 5,
+              "arb_rear": 5,
+              "damper_bump_front": 25,
+              "damper_bump_rear": 25,
+              "damper_rebound_front": 45,
+              "damper_rebound_rear": 45,
+              "downforce_front": 400,
+              "downforce_rear": 600,
+              "front_bias": 0
+            }
+          }
+    response:
+      status: 201
+      statusText: Created
+      headers:
+        - name: date
+          value: Wed, 25 Mar 2026 20:52:55 GMT
+        - name: server
+          value: uvicorn
+        - name: content-length
+          value: "336"
+        - name: content-type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "id": 2,
+            "car_id": 301,
+            "track_name": "Suzuka, full circuit",
+            "started_at": "2026-03-25T20:52:56",
+            "manual_config": {
+              "ride_height_front": 60,
+              "ride_height_rear": 70,
+              "arb_front": 5,
+              "arb_rear": 5,
+              "damper_bump_front": 25,
+              "damper_bump_rear": 25,
+              "damper_rebound_front": 45,
+              "damper_rebound_rear": 45,
+              "downforce_front": 400,
+              "downforce_rear": 600,
+              "front_bias": 0
+            }
+          }

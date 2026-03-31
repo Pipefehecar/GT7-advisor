@@ -8,6 +8,11 @@ http:
   url: "{{api_url}}/cars/sync-catalog"
   auth: inherit
 
+runtime:
+  variables:
+    - name: api_url
+      value: http://localhost:8005
+
 settings:
   encodeUrl: false
   timeout: 0

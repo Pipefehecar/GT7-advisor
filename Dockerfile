@@ -4,11 +4,13 @@ WORKDIR /app
 
 # System deps (needed for asyncpg compilation if switching to Postgres)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc libpq-dev \
+    build-essential libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt && \
+RUN pip install --no-cache-dir setuptools wheel && \
+    pip install --no-cache-dir --no-build-isolation salsa20 && \
+    pip install --no-cache-dir -r requirements.txt && \
     python -c "\
 import pathlib; \
 f = pathlib.Path('/usr/local/lib/python3.12/site-packages/salsa20.py'); \

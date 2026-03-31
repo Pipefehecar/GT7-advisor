@@ -19,23 +19,45 @@ class CarOut(BaseModel):
 
 class TuningProfileIn(BaseModel):
     """
-    Define which parameters are adjustable and their valid ranges.
+    Full GT7 tuning sheet — mirrors the in-game configuration screen.
+    Each section is a dict that can contain:
+      - ranges:     { param_key: [min, max] }       numeric tunable params
+      - current:    { param_key: value }             current numeric values
+      - selections: { param_key: "option_string" }   dropdown / categorical values
 
     Example:
     {
       "suspension": {
-        "ranges": { "spring_rate_front": [3.0, 15.0], "ride_height_front": [50, 150] },
-        "current": { "spring_rate_front": 7.5, "ride_height_front": 65 }
+        "ranges": { "ride_height_front": [50, 150], "arb_front": [1, 10] },
+        "current": { "ride_height_front": 65, "arb_front": 5 }
       },
-      "aerodynamics": {
-        "ranges": { "downforce_front": [0, 50], "downforce_rear": [0, 50] }
+      "tires": {
+        "selections": { "compound_front": "Carrera: blando", "compound_rear": "Carrera: blando" }
+      },
+      "supercharger": {
+        "selections": { "turbo": "rpm altas", "anti_lag": "Desactivar" }
       }
     }
     """
+    # ── Page 1 ──────────────────────────────────────────────────────────────
+    tires: dict[str, Any] | None = None
     suspension: dict[str, Any] | None = None
     aerodynamics: dict[str, Any] | None = None
+    weight_balance: dict[str, Any] | None = None
     differential: dict[str, Any] | None = None
     transmission: dict[str, Any] | None = None
+    nitro: dict[str, Any] | None = None
+
+    # ── Page 2 ──────────────────────────────────────────────────────────────
+    supercharger: dict[str, Any] | None = None
+    intake_exhaust: dict[str, Any] | None = None
+    brakes: dict[str, Any] | None = None
+    steering: dict[str, Any] | None = None
+    drivetrain: dict[str, Any] | None = None
+    engine_mods: dict[str, Any] | None = None
+    body: dict[str, Any] | None = None
+
+    # ── Legacy (kept for backward compat) ───────────────────────────────────
     brake_balance: dict[str, Any] | None = None
 
 
@@ -102,3 +124,27 @@ class TelemetryStatus(BaseModel):
     ps_ip: str
     speed_kmh: float | None = None
     rpm: float | None = None
+
+
+# ── OCR / Vision Extraction ────────────────────────────────────────────────────
+
+class TuningScreenshotResponse(BaseModel):
+    """Response from OCR/Vision extraction of a GT7 tuning screenshot."""
+
+    extracted_profile: dict[str, Any]
+    """Extracted tuning profile (same structure as TuningProfileIn)."""
+
+    provider: str
+    """LLM provider used (e.g. 'anthropic')."""
+
+    model: str
+    """Model name (e.g. 'claude-3-5-sonnet-20241022')."""
+
+    sections_found: list[str]
+    """List of sections that had visible data (e.g. ['tires', 'suspension'])."""
+
+    warnings: list[str]
+    """Non-critical warnings (e.g. ambiguous values, unrecognized options)."""
+
+    car_name: str | None = None
+    """Car name detected in the screenshot, if visible."""

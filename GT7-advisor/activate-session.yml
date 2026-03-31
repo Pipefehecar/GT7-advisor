@@ -5,7 +5,7 @@ info:
 
 http:
   method: post
-  url: "{{api_url}}/sessions/1/activate"
+  url: "{{api_url}}/sessions/2/activate"
   auth: inherit
 
 settings:

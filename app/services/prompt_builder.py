@@ -2,10 +2,8 @@
 Prompt Builder
 --------------
 Builds system + user prompts from session data.
-
-The key safety mechanism: only sections present in the car's
-tuning_profile JSON are included.  The LLM cannot suggest
-changes to parts that don't exist on the car.
+The LLM is instructed to respond with structured JSON so the frontend
+can render the suggestions as cards (matching the GT7 in-game UI style).
 """
 
 from app.db.models import Car, Lap, Session
@@ -16,23 +14,36 @@ You are an expert Gran Turismo 7 race engineer with deep knowledge of car dynami
 Your task: analyse telemetry data from a driving session and suggest concrete
 setup changes to improve lap time and car balance.
 
+RESPONSE FORMAT — return ONLY a valid JSON object, no markdown, no extra text:
+{
+  "summary": "<1-2 sentence overall assessment in Spanish>",
+  "recommendations": [
+    {
+      "section": "<section_key e.g. suspension>",
+      "section_label": "<label exactly as shown in GT7 in Spanish e.g. Suspensión>",
+      "parameter_key": "<param_key e.g. ride_height_front>",
+      "parameter_label": "<label exactly as shown in GT7 in Spanish e.g. Ajuste de altura de carrocería (Del.)>",
+      "current_value": "<current value as string>",
+      "suggested_value": "<suggested value as string>",
+      "unit": "<unit string or null e.g. mm, Hz, %, km/h>",
+      "reason": "<explanation in Spanish referencing specific telemetry numbers>"
+    }
+  ]
+}
+
 STRICT RULES:
 1. Only suggest changes to parameters listed under AVAILABLE TUNING SECTIONS.
    If a section is absent, do NOT mention it.
-2. Always give a specific numeric value within the stated range.
-3. Link every suggestion to a telemetry observation (e.g. "X oversteer events
-   indicate the rear is too loose — increase rear spring rate from Y to Z").
-4. Keep suggestions concise and ordered by expected impact.
-5. If no tuning profile is available, give general advice but explicitly state
-   you cannot confirm valid ranges for this specific car.
+2. For numeric params: give a specific value within the stated [min, max] range.
+3. For selection params: choose from the available options listed.
+4. Link every recommendation to a specific telemetry observation.
+5. Maximum 7 recommendations, ordered by expected impact.
+6. Use Spanish labels exactly as they appear in Gran Turismo 7.
+7. Return ONLY the JSON object — no surrounding text, no markdown code fences.
 """
 
 
-def build_prompt(
-    session: Session,
-    car: Car | None,
-    laps: list[Lap],
-) -> str:
+def build_prompt(session: Session, car: Car | None, laps: list[Lap]) -> str:
     lines: list[str] = []
 
     # ── Context ───────────────────────────────────────────────────────────────
@@ -56,13 +67,11 @@ def build_prompt(
     if laps:
         lines.append("### Telemetry Summary")
         lines.append(f"  - Laps recorded: {len(laps)}")
-
-        timed = [l for l in laps if l.lap_time_ms]
+        timed = [lap for lap in laps if lap.lap_time_ms]
         if timed:
-            best = min(timed, key=lambda l: l.lap_time_ms)
+            best = min(timed, key=lambda lap: lap.lap_time_ms)
             ms = best.lap_time_ms
             lines.append(f"  - Best lap time: {ms // 60000}:{(ms % 60000) / 1000:06.3f}")
-
         lines += [
             f"  - Total oversteer events  : {sum(l.oversteer_events for l in laps)}",
             f"  - Total understeer events : {sum(l.understeer_events for l in laps)}",
@@ -70,7 +79,6 @@ def build_prompt(
             f"  - Total wheelspin events  : {sum(l.wheelspin_events for l in laps)}",
             f"  - Total bottom-out events : {sum(l.bottom_out_events for l in laps)}",
         ]
-
         last = laps[-1]
         if last.tyre_temp_fl:
             lines.append(
@@ -90,53 +98,81 @@ def build_prompt(
             "Provide general advice based on telemetry only."
         )
     else:
-        _section(lines, profile, "suspension", "Suspension", [
-            "spring_rate_front", "spring_rate_rear",
+        _numeric(lines, profile, "tires", "Neumáticos", [])
+        _numeric(lines, profile, "suspension", "Suspensión", [
             "ride_height_front", "ride_height_rear",
+            "arb_front", "arb_rear",
             "damper_bump_front", "damper_bump_rear",
             "damper_rebound_front", "damper_rebound_rear",
-            "arb_front", "arb_rear",
+            "natural_frequency_front", "natural_frequency_rear",
             "camber_front", "camber_rear",
             "toe_front", "toe_rear",
         ])
-        _section(lines, profile, "aerodynamics", "Aerodynamics", [
+        _numeric(lines, profile, "aerodynamics", "Aerodinámica", [
             "downforce_front", "downforce_rear",
+            "power_output",
         ])
-        _section(lines, profile, "differential", "Differential / LSD", [
-            "initial_torque", "accel_sensitivity", "decel_sensitivity",
+        _numeric(lines, profile, "weight_balance", "Ajuste de rendimiento", [
+            "ballast", "ballast_position", "power_limiter",
         ])
-        _section(lines, profile, "transmission", "Transmission", [
-            "final_drive",
+        _numeric(lines, profile, "differential", "Engranaje diferencial", [
+            "initial_torque_front", "initial_torque_rear",
+            "accel_sensitivity_front", "accel_sensitivity_rear",
+            "decel_sensitivity_front", "decel_sensitivity_rear",
+            "torque_distribution",
+        ])
+        _numeric(lines, profile, "transmission", "Transmisión", [
+            "top_speed", "final_drive",
             "gear_1", "gear_2", "gear_3", "gear_4",
             "gear_5", "gear_6", "gear_7",
         ])
-        _section(lines, profile, "brake_balance", "Brake Balance", [
-            "front_bias",
+        _numeric(lines, profile, "nitro", "Nitro/Rebase", ["output"])
+        _numeric(lines, profile, "supercharger", "Sobrealimentador", [])
+        _numeric(lines, profile, "intake_exhaust", "Admisión y escape", [])
+        _numeric(lines, profile, "brakes", "Frenos", [
+            "handbrake_torque", "brake_bias",
         ])
+        _numeric(lines, profile, "steering", "Dirección", ["rear_steering_angle"])
+        _numeric(lines, profile, "drivetrain", "Tren de transmisión", [])
+        _numeric(lines, profile, "engine_mods", "Modificación del motor", [])
+        _numeric(lines, profile, "body", "Carrocería", [])
+        # legacy
+        _numeric(lines, profile, "brake_balance", "Balance de frenos", ["front_bias"])
 
-    lines += ["", "---", "Please provide your setup recommendations:"]
+    lines += ["", "---", "Provide your setup recommendations as JSON:"]
     return "\n".join(lines)
 
 
-def _section(
+def _numeric(
     lines: list[str],
     profile: dict,
     key: str,
     label: str,
-    params: list[str],
-):
+    param_keys: list[str],
+) -> None:
     data = profile.get(key)
     if not data:
         return
+
     ranges: dict = data.get("ranges", {})
     current: dict = data.get("current", {})
-    if not ranges:
+    selections: dict = data.get("selections", {})
+
+    # Skip section if nothing to show
+    if not ranges and not selections:
         return
 
     lines.append(f"\n**{label}**")
-    for p in params:
+
+    # Numeric params with ranges
+    shown_keys = param_keys if param_keys else list(ranges.keys())
+    for p in shown_keys:
         if p not in ranges:
             continue
         lo, hi = ranges[p]
         curr = current.get(p, "?")
         lines.append(f"  - {p.replace('_', ' ').title()}: current={curr}  range=[{lo}, {hi}]")
+
+    # Categorical / selection params
+    for p, val in selections.items():
+        lines.append(f"  - {p.replace('_', ' ').title()}: current={val}  (categorical)")

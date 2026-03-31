@@ -5,15 +5,15 @@ info:
 
 http:
   method: get
-  url: "{{api_url}}/cars?name=m6"
+  url: "{{api_url}}/cars?name=rsr"
   params:
+    - name: name
+      value: rsr
+      type: query
     - name: manufacturer
       value: Mazda
       type: query
       disabled: true
-    - name: name
-      value: m6
-      type: query
   auth: inherit
 
 settings:

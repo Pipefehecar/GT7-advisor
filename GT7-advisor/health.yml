@@ -8,6 +8,11 @@ http:
   url: "{{api_url}}/health"
   auth: inherit
 
+runtime:
+  variables:
+    - name: api_url
+      value: http://localhost:8005
+
 settings:
   encodeUrl: true
   timeout: 0
